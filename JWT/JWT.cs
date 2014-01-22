@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web.Script.Serialization;
 
 namespace JWT
 {
@@ -19,7 +18,6 @@ namespace JWT
     public static class JsonWebToken
     {
         private static Dictionary<JwtHashAlgorithm, Func<byte[], byte[], byte[]>> HashAlgorithms;
-        private static JavaScriptSerializer jsonSerializer = new JavaScriptSerializer();
 
         static JsonWebToken()
         {
@@ -43,8 +41,8 @@ namespace JWT
             var segments = new List<string>();
             var header = new { typ = "JWT", alg = algorithm.ToString() };
 
-            byte[] headerBytes = Encoding.UTF8.GetBytes(jsonSerializer.Serialize(header));
-            byte[] payloadBytes = Encoding.UTF8.GetBytes(jsonSerializer.Serialize(payload));
+            byte[] headerBytes = Encoding.UTF8.GetBytes(ServiceStack.Text.JsonSerializer.SerializeToString(header));
+            byte[] payloadBytes = Encoding.UTF8.GetBytes(ServiceStack.Text.JsonSerializer.SerializeToString(payload));
 
             segments.Add(Base64UrlEncode(headerBytes));
             segments.Add(Base64UrlEncode(payloadBytes));
@@ -87,7 +85,7 @@ namespace JWT
             byte[] crypto = Base64UrlDecode(parts[2]);
 
             var headerJson = Encoding.UTF8.GetString(Base64UrlDecode(header));
-            var headerData = jsonSerializer.Deserialize<Dictionary<string, object>>(headerJson);
+            var headerData = ServiceStack.Text.JsonSerializer.DeserializeFromString<Dictionary<string, object>>(headerJson);
             var payloadJson = Encoding.UTF8.GetString(Base64UrlDecode(payload));
 
             if (verify)
@@ -132,7 +130,7 @@ namespace JWT
         public static object DecodeToObject(string token, string key, bool verify = true)
         {
             var payloadJson = JsonWebToken.Decode(token, key, verify);
-            var payloadData = jsonSerializer.Deserialize<Dictionary<string, object>>(payloadJson);
+            var payloadData = ServiceStack.Text.JsonSerializer.DeserializeFromString<Dictionary<string, object>>(payloadJson);
             return payloadData;
         }
 
